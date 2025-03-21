@@ -16,7 +16,7 @@ const ApplyJob = () => {
 
   const { id } = useParams()
 
-  const { getToken } = useAuth()
+  const { getToken, isSignedIn } = useAuth()
 
   const navigate = useNavigate()
 
@@ -45,12 +45,12 @@ const ApplyJob = () => {
 
   const applyHandler = async () => {
     try {
-
-      if (!userData) {
-        return toast.error('Login to apply for jobs')
+      if (!isSignedIn) {
+        toast.error('Please sign in to apply for jobs')
+        return
       }
 
-      if (!userData.resume) {
+      if (!userData?.resume) {
         navigate('/applications')
         return toast.error('Upload resume to apply')
       }
@@ -91,6 +91,40 @@ const ApplyJob = () => {
     }
   }, [JobData, userApplications, id])
 
+  const renderApplyButton = () => {
+    if (!isSignedIn) {
+      return (
+        <button 
+          onClick={() => navigate('/sign-in')} 
+          className='bg-blue-600 p-2.5 px-10 text-white rounded hover:bg-blue-700'
+        >
+          Sign in to Apply
+        </button>
+      )
+    }
+
+    if (!userData?.resume) {
+      return (
+        <button 
+          onClick={() => navigate('/applications')} 
+          className='bg-blue-600 p-2.5 px-10 text-white rounded hover:bg-blue-700'
+        >
+          Upload Resume to Apply
+        </button>
+      )
+    }
+
+    return (
+      <button 
+        onClick={applyHandler} 
+        className='bg-blue-600 p-2.5 px-10 text-white rounded hover:bg-blue-700'
+        disabled={isAlreadyApplied}
+      >
+        {isAlreadyApplied ? 'Already Applied' : 'Apply Now'}
+      </button>
+    )
+  }
+
   return JobData ? (
     <>
       <Navbar />
@@ -124,7 +158,7 @@ const ApplyJob = () => {
             </div>
 
             <div className='flex flex-col justify-center text-end text-sm max-md:mx-auto max-md:text-center'>
-              <button onClick={applyHandler} className='bg-blue-600 p-2.5 px-10 text-white rounded'>{isAlreadyApplied ? 'Already Applied' : 'Apply Now'}</button>
+              {renderApplyButton()}
               <p className='mt-1 text-gray-600'>Posted {moment(JobData.date).fromNow()}</p>
             </div>
 
@@ -134,16 +168,16 @@ const ApplyJob = () => {
             <div className='w-full lg:w-2/3'>
               <h2 className='font-bold text-2xl mb-4'>Job description</h2>
               <div className='rich-text' dangerouslySetInnerHTML={{ __html: JobData.description }}></div>
-              <button onClick={applyHandler} className='bg-blue-600 p-2.5 px-10 text-white rounded mt-10'>{isAlreadyApplied ? 'Already Applied' : 'Apply Now'}</button>
+              <div className='mt-10'>
+                {renderApplyButton()}
+              </div>
             </div>
             {/* Right Section More Jobs */}
             <div className='w-full lg:w-1/3 mt-8 lg:mt-0 lg:ml-8 space-y-5'>
               <h2>More jobs from {JobData.companyId.name}</h2>
               {jobs.filter(job => job._id !== JobData._id && job.companyId._id === JobData.companyId._id)
                 .filter(job => {
-                  // Set of applied jobIds
                   const appliedJobsIds = new Set(userApplications.map(app => app.jobId && app.jobId._id))
-                  // Return true if the user has not already applied for this job
                   return !appliedJobsIds.has(job._id)
                 }).slice(0, 4)
                 .map((job, index) => <JobCard key={index} job={job} />)}
