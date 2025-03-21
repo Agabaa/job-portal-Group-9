@@ -4,6 +4,7 @@ import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 
+
 const Navbar = () => {
 
     const { openSignIn } = useClerk()
